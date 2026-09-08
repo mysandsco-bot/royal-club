@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Royal Club — Demo Lobby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Manrope:wght@500;600;700;800&display=swap">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#070403;
+  --bg2:#120a05;
+  --panel:#160d06;
+  --panel2:#1e1207;
+  --gold:#f2c14e;
+  --gold-hi:#ffe9a8;
+  --gold-lo:#8a5a12;
+  --gold-line:rgba(242,193,78,.45);
+  --gold-soft:rgba(242,193,78,.12);
+  --red:#c8102e;
+  --red-deep:#6e0716;
+  --cream:#f7edd8;
+  --muted:#b89d6f;
+  --win:#6fe09a;
+  --shadow:0 12px 40px rgba(0,0,0,.6);
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{
+  min-height:100vh;
+  color:var(--cream);
+  font-family:"Manrope","Rajdhani",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:
+    radial-gradient(60% 45% at 78% 18%, rgba(200,16,46,.20), transparent 65%),
+    radial-gradient(55% 40% at 18% 8%,  rgba(242,193,78,.14), transparent 60%),
+    radial-gradient(70% 60% at 50% 110%, rgba(120,60,10,.25), transparent 60%),
+    linear-gradient(180deg,#140b05 0%, var(--bg) 45%, #050302 100%);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:8px}
+::selection{background:var(--gold);color:#241500}
+.goldtext{
+  background:linear-gradient(180deg,#fff6cf 5%,#ffd76a 38%,#f2c14e 55%,#a06a12 78%,#ffd76a 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.mono{font-variant-numeric:tabular-nums}
+
+/* floating gold dust */
+.dust{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.dust i{position:absolute;bottom:-10px;width:4px;height:4px;border-radius:50%;
+  background:radial-gradient(circle,#ffe9a8,#f2c14e 60%,transparent);
+  opacity:0;animation:rise linear infinite}
+@keyframes rise{
+  0%{transform:translateY(0) scale(.6);opacity:0}
+  12%{opacity:.85}
+  100%{transform:translateY(-105vh) scale(1.15);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ============ TOP BAR ============ */
+.topbar{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:10px clamp(10px,2.5vw,26px);
+  background:linear-gradient(180deg,rgba(10,5,2,.95),rgba(10,5,2,.78));
+  border-bottom:1px solid var(--gold-line);
+  backdrop-filter:blur(8px);
+}
+.player{display:flex;align-items:center;gap:10px;cursor:pointer;margin-right:auto}
+.avatar{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:22px;
+  background:radial-gradient(circle at 35% 28%,#3a2410,#170c04);
+  border:2px solid var(--gold);box-shadow:0 0 12px rgba(242,193,78,.35)}
+.player .who{line-height:1.15}
+.player .hello{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.player .name{font-weight:800;font-size:15px;letter-spacing:.5px}
+.viprow{display:flex;align-items:center;gap:6px;margin-top:3px}
+.vipchip{font-size:10px;font-weight:800;padding:1.5px 8px;border-radius:999px;color:#2a1700;
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold));border:1px solid var(--gold-lo)}
+.xpbar{width:80px;height:8px;border-radius:999px;background:#241505;border:1px solid var(--gold-lo);overflow:hidden}
+.xpbar b{display:block;height:100%;background:linear-gradient(90deg,var(--gold-lo),var(--gold),var(--gold-hi));width:75%}
+
+.wallet{display:flex;gap:10px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 10px;border-radius:999px;
+  background:linear-gradient(180deg,#1c1006,#0d0703);
+  border:1px solid var(--gold-line);box-shadow:inset 0 1px 0 rgba(255,233,168,.12)}
+.pill .ic{font-size:16px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.pill .amt{font-weight:800;font-size:14px;letter-spacing:.4px;min-width:70px;text-align:right}
+.pill .plus{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#2a1700;
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold));border:1px solid var(--gold-lo);font-size:15px;line-height:1;transition:.15s}
+.pill .plus:hover{transform:scale(1.12)}
+
+.quick{display:flex;gap:6px}
+.qbtn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 9px;border-radius:12px;transition:.15s;color:var(--gold)}
+.qbtn .ic{font-size:21px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
+.qbtn .lb{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.qbtn:hover{background:var(--gold-soft)}
+.dot{position:absolute;top:2px;right:4px;width:15px;height:15px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ff6b6b,var(--red));
+  color:#fff;font-size:10px;font-weight:900;display:grid;place-items:center;border:1px solid #ffb0b0}
+
+/* ============ FRAME / LAYOUT ============ */
+.frame{position:relative;z-index:2;max-width:1280px;margin:0 auto;
+  display:grid;grid-template-columns:86px 1fr 118px;gap:10px;
+  padding:14px clamp(8px,2vw,22px) 108px}
+@media(max-width:860px){
+  .frame{grid-template-columns:1fr;padding-bottom:96px}
+  .frame .rail{flex-direction:row;justify-content:center;overflow-x:auto;padding:4px 2px;scrollbar-width:none}
+  .frame .rail::-webkit-scrollbar{display:none}
+  .frame .rail .rbtn{min-width:76px;flex:0 0 auto}
+}
+
+/* side rails */
+.rail{display:flex;flex-direction:column;gap:12px}
+.rbtn{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 6px;border-radius:14px;transition:.18s;
+  background:linear-gradient(180deg,rgba(30,18,7,.85),rgba(13,7,3,.85));
+  border:1px solid rgba(242,193,78,.28);box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.rbtn:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 8px 20px rgba(0,0,0,.6),0 0 14px rgba(242,193,78,.25)}
+.rbtn .ic{font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
+.rbtn .lb{font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--gold);text-align:center;line-height:1.25}
+.tag{position:absolute;top:-7px;left:50%;transform:translateX(-50%);
+  font-size:8.5px;font-weight:900;letter-spacing:1px;padding:2px 8px;border-radius:999px;color:#fff;
+  background:linear-gradient(180deg,#ff5a5a,var(--red));border:1px solid #ffb0b0;white-space:nowrap;
+  animation:pulse 1.6s ease infinite}
+@keyframes pulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.12)}}
+.bang{position:absolute;top:-6px;right:-5px;width:17px;height:17px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ff6b6b,var(--red));color:#fff;font-size:11px;font-weight:900;
+  display:grid;place-items:center;border:1px solid #ffb0b0}
+
+/* ============ HERO (center column) ============ */
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px;padding-top:6px}
+.crown{font-size:clamp(30px,5vw,44px);filter:drop-shadow(0 0 14px rgba(242,193,78,.55));margin-bottom:-14px}
+.logo{font-family:"Cinzel",Georgia,serif;font-weight:900;line-height:.95;letter-spacing:3px;
+  font-size:clamp(46px,9vw,86px);filter:drop-shadow(0 4px 14px rgba(0,0,0,.8)) drop-shadow(0 0 26px rgba(242,193,78,.28))}
+.logo-sub{display:flex;align-items:center;gap:12px;font-family:"Cinzel",serif;font-weight:800;
+  letter-spacing:8px;font-size:clamp(15px,3vw,24px);color:var(--gold)}
+.logo-sub::before,.logo-sub::after{content:"";height:1px;width:clamp(24px,6vw,70px);
+  background:linear-gradient(90deg,transparent,var(--gold));}
+.logo-sub::after{background:linear-gradient(90deg,var(--gold),transparent)}
+.tagline{font-size:clamp(9px,1.6vw,11.5px);letter-spacing:3.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+
+/* enter game button */
+.enter{position:relative;margin-top:6px;padding:16px clamp(34px,8vw,84px);border-radius:16px;
+  font-family:"Cinzel",serif;font-weight:900;font-size:clamp(19px,3.4vw,28px);letter-spacing:4px;color:#fff;
+  background:
+    linear-gradient(180deg,#8e1023 0%,#5c0713 55%,#7d0c1d 100%);
+  border:2px solid var(--gold);
+  box-shadow:0 0 0 3px rgba(0,0,0,.55),0 0 0 4px var(--gold-lo),
+             0 10px 30px rgba(0,0,0,.65),0 0 34px rgba(242,193,78,.35),
+             inset 0 2px 10px rgba(255,150,150,.25);
+  text-shadow:0 2px 6px rgba(0,0,0,.7);transition:.18s;overflow:hidden}
+.enter::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,240,190,.35) 50%,transparent 70%);
+  transform:translateX(-120%);animation:sheen 3.2s ease infinite}
+@keyframes sheen{0%,60%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+.enter:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 0 0 3px rgba(0,0,0,.55),0 0 0 4px var(--gold),
+  0 14px 34px rgba(0,0,0,.7),0 0 48px rgba(242,193,78,.5),inset 0 2px 10px rgba(255,150,150,.3)}
+.enter:active{transform:scale(.98)}
+
+/* jackpot banner */
+.jack{width:min(560px,100%);cursor:pointer;border-radius:16px;padding:14px 18px 16px;position:relative;
+  background:linear-gradient(180deg,#241105,#120802);
+  border:2px solid var(--gold-line);
+  box-shadow:var(--shadow),inset 0 0 30px rgba(242,193,78,.08);transition:.18s}
+.jack:hover{border-color:var(--gold);box-shadow:var(--shadow),0 0 26px rgba(242,193,78,.3),inset 0 0 30px rgba(242,193,78,.12)}
+.jack .jt{font-family:"Cinzel",serif;font-weight:800;letter-spacing:4px;font-size:clamp(13px,2.4vw,17px);color:var(--gold)}
+.jack .jn{font-family:"Rajdhani","Manrope",sans-serif;font-weight:700;letter-spacing:2px;
+  font-size:clamp(26px,5.6vw,44px);line-height:1.05;margin-top:2px;
+  filter:drop-shadow(0 0 12px rgba(242,193,78,.45))}
+.jack .side-coin{position:absolute;font-size:clamp(20px,3.5vw,30px);top:50%;transform:translateY(-50%)}
+.jack .side-coin.l{left:12px}.jack .side-coin.r{right:12px}
+.jack .gem{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:18px;
+  filter:drop-shadow(0 0 8px rgba(255,80,80,.8))}
+
+/* game cards */
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;width:100%;margin-top:4px}
+@media(max-width:860px){.cards{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}
+.gcard{position:relative;border-radius:16px;overflow:hidden;padding:0;text-align:center;
+  border:2px solid rgba(242,193,78,.4);background:linear-gradient(180deg,#2a1508,#120802);
+  box-shadow:0 8px 22px rgba(0,0,0,.55);transition:.2s;display:flex;flex-direction:column}
+.gcard:hover{transform:translateY(-6px) scale(1.02);border-color:var(--gold);
+  box-shadow:0 14px 30px rgba(0,0,0,.7),0 0 22px rgba(242,193,78,.35)}
+.gcard .art{display:grid;place-items:center;height:96px;font-size:46px;position:relative;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
+.gcard .art::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(60% 60% at 50% 35%,rgba(242,193,78,.22),transparent 70%)}
+.gcard.hotc .art::before{background:radial-gradient(60% 60% at 50% 35%,rgba(200,16,46,.35),transparent 70%)}
+.gcard .plate{margin-top:auto;padding:8px 4px 9px;font-family:"Cinzel",serif;font-weight:800;
+  font-size:clamp(11px,1.7vw,14px);letter-spacing:1.5px;color:var(--gold);
+  background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.75));border-top:1px solid rgba(242,193,78,.35)}
+.gcard .hot{position:absolute;top:6px;left:6px;font-size:8.5px;font-weight:900;letter-spacing:1px;
+  padding:2px 7px;border-radius:999px;color:#fff;background:linear-gradient(180deg,#ff5a5a,var(--red));border:1px solid #ffb0b0}
+
+.demonote{margin-top:10px;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);
+  border:1px solid rgba(242,193,78,.25);border-radius:999px;padding:6px 16px;background:rgba(0,0,0,.35)}
+
+/* ============ BOTTOM NAV ============ */
+.bottomnav{position:fixed;left:0;right:0;bottom:0;z-index:40;
+  display:flex;justify-content:center;gap:clamp(2px,2vw,26px);align-items:flex-end;
+  padding:6px clamp(6px,2vw,20px) calc(8px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(12,6,2,.86),rgba(7,3,1,.98));
+  border-top:1px solid var(--gold-line);backdrop-filter:blur(10px)}
+.nbtn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:12px;
+  transition:.15s;min-width:58px}
+.nbtn .ic{font-size:23px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
+.nbtn .lb{font-size:9.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.nbtn.on .lb,.nbtn:hover .lb{color:var(--gold)}
+.nbtn.on{background:var(--gold-soft);box-shadow:inset 0 0 0 1px rgba(242,193,78,.35)}
+.nbtn.vip{margin-top:-26px}
+.nbtn.vip .ring{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 40% 30%,#40130a,#1b0602 70%);
+  border:3px solid var(--gold);box-shadow:0 0 0 3px #2a1200,0 6px 18px rgba(0,0,0,.7),0 0 22px rgba(242,193,78,.45);
+  font-size:26px;transition:.18s}
+.nbtn.vip:hover .ring{transform:scale(1.07);box-shadow:0 0 0 3px #2a1200,0 8px 20px rgba(0,0,0,.8),0 0 32px rgba(242,193,78,.6)}
+.nbtn.vip .lb{color:var(--gold);font-family:"Cinzel",serif;font-size:11px;letter-spacing:2px}
+
+/* ============ MODALS ============ */
+.overlay{position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:18px;
+  background:rgba(4,2,1,.78);backdrop-filter:blur(6px)}
+.overlay.on{display:grid}
+.sheet{width:min(680px,100%);max-height:min(86vh,780px);display:flex;flex-direction:column;border-radius:18px;overflow:hidden;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:2px solid var(--gold-line);box-shadow:0 24px 70px rgba(0,0,0,.8),0 0 40px rgba(242,193,78,.15);
+  animation:pop .25s ease}
+@keyframes pop{from{transform:translateY(22px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.sheet-head{display:flex;align-items:center;gap:10px;padding:14px 18px;
+  background:linear-gradient(180deg,rgba(242,193,78,.14),transparent);
+  border-bottom:1px solid rgba(242,193,78,.3)}
+.sheet-head h2{margin:0;font-family:"Cinzel",serif;font-size:19px;letter-spacing:2px;color:var(--gold);font-weight:800;flex:1}
+.xbtn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:16px;font-weight:900;
+  color:var(--gold);border:1px solid var(--gold-line);transition:.15s}
+.xbtn:hover{background:var(--gold-soft);transform:rotate(90deg)}
+.sheet-body{padding:18px;overflow-y:auto;overscroll-behavior:contain}
+
+/* generic bits inside panels */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{border-radius:12px;padding:14px;text-align:center;border:1px solid rgba(242,193,78,.3);
+  background:linear-gradient(180deg,#201005,#0f0703);transition:.15s;display:flex;flex-direction:column;gap:6px;align-items:center}
+button.tile:hover{border-color:var(--gold);transform:translateY(-3px)}
+.tile .big{font-size:32px}
+.tile b{font-family:"Cinzel",serif;letter-spacing:1px;color:var(--gold);font-size:13px}
+.tile small{color:var(--muted);font-size:11px;line-height:1.4}
+.gbtn{padding:11px 22px;border-radius:11px;font-weight:800;letter-spacing:1px;font-size:14px;color:#2a1700;
+  background:linear-gradient(180deg,var(--gold-hi),var(--gold) 55%,#c98f1e);
+  border:1px solid var(--gold-lo);box-shadow:0 4px 14px rgba(242,193,78,.3);transition:.15s}
+.gbtn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.gbtn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.gbtn.red{color:#fff;background:linear-gradient(180deg,#e04a5e,var(--red) 55%,var(--red-deep));border-color:#7d0c1d;
+  box-shadow:0 4px 14px rgba(200,16,46,.35)}
+.gbtn.ghost{color:var(--gold);background:transparent;border:1px solid var(--gold-line);box-shadow:none}
+.gbtn.wide{width:100%}
+.listrow{display:flex;align-items:center;gap:12px;padding:11px 6px;border-bottom:1px solid rgba(242,193,78,.14)}
+.listrow:last-child{border-bottom:none}
+.listrow .ic{font-size:24px}
+.listrow .tx{flex:1;min-width:0}
+.listrow .tx b{display:block;font-size:14px}
+.listrow .tx small{color:var(--muted);font-size:11.5px}
+.note{font-size:12px;color:var(--muted);line-height:1.55;border:1px dashed rgba(242,193,78,.35);
+  border-radius:10px;padding:10px 12px;margin-top:14px}
+.center{text-align:center}
+.betbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:12px 0}
+.betchip{padding:7px 14px;border-radius:999px;font-weight:800;font-size:13px;border:1px solid var(--gold-line);color:var(--cream);transition:.15s}
+.betchip.on{background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#2a1700;border-color:var(--gold-lo)}
+.result{min-height:24px;text-align:center;font-weight:800;font-size:15px;margin-top:10px}
+.result.win{color:var(--win)}.result.lose{color:#ff8a8a}
+
+/* slots */
+.reels{display:flex;gap:10px;justify-content:center;margin:8px 0 4px}
+.reel{width:84px;height:96px;border-radius:12px;display:grid;place-items:center;font-size:48px;overflow:hidden;
+  background:linear-gradient(180deg,#000,#1c0f05 50%,#000);border:2px solid var(--gold-lo);
+  box-shadow:inset 0 6px 14px rgba(0,0,0,.8),0 0 12px rgba(242,193,78,.15)}
+.reel.rolling span{animation:roll .35s linear infinite}
+@keyframes roll{0%{transform:translateY(-34px);opacity:.2}50%{opacity:1}100%{transform:translateY(34px);opacity:.2}}
+
+/* cards (baccarat) */
+.bhand{display:flex;gap:8px;justify-content:center;min-height:92px;flex-wrap:wrap}
+.pcard{width:60px;height:86px;border-radius:8px;background:linear-gradient(180deg,#fdf8ea,#e9dfc6);color:#161616;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;
+  box-shadow:0 4px 10px rgba(0,0,0,.5);animation:deal .3s ease}
+.pcard.redc{color:#c0392b}
+@keyframes deal{from{transform:translateY(-14px) rotate(-5deg);opacity:0}to{transform:none;opacity:1}}
+.bacc-opts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.bacc-opts .betchip.on{box-shadow:0 0 14px rgba(242,193,78,.4)}
+.handlbl{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);text-align:center;margin:10px 0 6px;font-weight:800}
+.handlbl b{color:var(--gold);margin-left:6px}
+
+/* wheel */
+.wheelbox{display:grid;place-items:center;margin:6px 0 14px;position:relative}
+.wheel{width:min(260px,70vw);aspect-ratio:1;border-radius:50%;position:relative;
+  border:6px solid var(--gold);box-shadow:0 0 0 4px #2a1200,0 10px 30px rgba(0,0,0,.7),0 0 30px rgba(242,193,78,.35);
+  background:conic-gradient(
+    #7d0c1d 0 45deg,#241105 45deg 90deg,#a3131f 90deg 135deg,#1c1006 135deg 180deg,
+    #7d0c1d 180deg 225deg,#241105 225deg 270deg,#a3131f 270deg 315deg,#1c1006 315deg 360deg);
+  transition:transform 3.4s cubic-bezier(.15,.85,.25,1)}
+.wheel span{position:absolute;left:50%;top:50%;font-weight:800;font-size:14px;color:var(--gold-hi);
+  transform-origin:0 0;text-shadow:0 1px 3px #000}
+.wheel-pin{position:absolute;top:-6px;left:50%;transform:translateX(-50%);z-index:2;font-size:26px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
+.wheel-hub{position:absolute;width:56px;height:56px;border-radius:50%;z-index:2;display:grid;place-items:center;font-size:24px;
+  background:radial-gradient(circle at 38% 30%,var(--gold-hi),var(--gold) 55%,var(--gold-lo));
+  border:3px solid #2a1200;box-shadow:0 4px 12px rgba(0,0,0,.6)}
+
+/* fishing */
+.pond{position:relative;height:260px;border-radius:14px;overflow:hidden;cursor:crosshair;
+  background:radial-gradient(80% 70% at 50% 20%,#0a2c3f,#04141f 75%);border:2px solid var(--gold-line)}
+.fish{position:absolute;font-size:30px;cursor:pointer;user-select:none;transition:transform .1s;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.6));animation:swim linear forwards}
+@keyframes swim{from{transform:translateX(0)}to{transform:translateX(var(--dx))}}
+.fish:hover{transform:scale(1.2)}
+.splash{position:absolute;pointer-events:none;font-size:20px;animation:fade .6s ease forwards}
+@keyframes fade{from{opacity:1;transform:scale(.6)}to{opacity:0;transform:scale(1.6)}}
+.hud{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-weight:700;margin:8px 2px}
+.hud b{color:var(--gold)}
+
+/* sports */
+.match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:12px 8px;
+  border-bottom:1px solid rgba(242,193,78,.14)}
+.match:last-child{border-bottom:none}
+.team{display:flex;flex-direction:column;align-items:center;gap:4px}
+.team .fl{font-size:26px}
+.team button{font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;border:1px solid var(--gold-line);transition:.15s}
+.team button.on{background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#2a1700}
+.vs{font-family:"Cinzel",serif;color:var(--red);font-weight:900}
+
+/* daily */
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:8px}
+.day{border-radius:12px;padding:10px 6px;text-align:center;border:1px solid rgba(242,193,78,.3);
+  background:linear-gradient(180deg,#201005,#0f0703)}
+.day.today{border-color:var(--gold);box-shadow:0 0 14px rgba(242,193,78,.3)}
+.day.claimed{opacity:.45}
+.day .d{font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:800}
+.day .ic{font-size:24px;margin:4px 0}
+.day .amt{font-size:12px;font-weight:800;color:var(--gold)}
+
+/* ranking */
+.rankrow{display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid rgba(242,193,78,.14)}
+.rankrow .pos{width:30px;text-align:center;font-family:"Cinzel",serif;font-weight:900;font-size:16px;color:var(--gold)}
+.rankrow .nm{flex:1;font-weight:700}
+.rankrow .sc{font-weight:800;color:var(--gold)}
+.rankrow.me{background:var(--gold-soft);border-radius:10px}
+
+/* toast */
+.toast{position:fixed;left:50%;bottom:104px;transform:translateX(-50%) translateY(16px);opacity:0;z-index:80;
+  background:linear-gradient(180deg,#241105,#120802);border:1px solid var(--gold);color:var(--cream);
+  padding:11px 22px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow);
+  transition:.25s;pointer-events:none;max-width:88vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="dust" id="dust"></div>
+
+<!-- ================= TOP BAR ================= -->
+<header class="topbar">
+  <div class="player" onclick="openPanel('profile')" role="button" tabindex="0">
+    <div class="avatar">👤</div>
+    <div class="who">
+      <div class="hello">Welcome back,</div>
+      <div class="name">PLAYER888</div>
+      <div class="viprow"><span class="vipchip">VIP <span id="viplvl">9</span></span>
+        <span class="xpbar"><b id="vipxp"></b></span></div>
+    </div>
+  </div>
+
+  <div class="wallet">
+    <div class="pill"><span class="ic">🪙</span><span class="amt mono goldtext" id="coins">0</span>
+      <button class="plus" onclick="openPanel('bonus')" title="Get coins">+</button></div>
+    <div class="pill"><span class="ic">💎</span><span class="amt mono" style="color:#ff7d8a" id="gems">0</span>
+      <button class="plus" onclick="openPanel('bonus')" title="Get gems">+</button></div>
+  </div>
+
+  <nav class="quick">
+    <button class="qbtn" onclick="openPanel('daily')"><span class="ic">🎁</span><span class="lb">Daily</span><span class="dot" id="dailyDot">!</span></button>
+    <button class="qbtn" onclick="openPanel('ranking')"><span class="ic">🏆</span><span class="lb">Ranking</span></button>
+    <button class="qbtn" onclick="openPanel('mail')"><span class="ic">✉️</span><span class="lb">Mail</span><span class="dot" id="mailDot">3</span></button>
+    <button class="qbtn" onclick="openPanel('settings')"><span class="ic">⚙️</span><span class="lb">Settings</span></button>
+  </nav>
+</header>
+
+<!-- ================= MAIN FRAME ================= -->
+<div class="frame">
+
+  <!-- left rail -->
+  <aside class="rail">
+    <button class="rbtn" onclick="openPanel('jackpot')"><span class="tag">HOT</span><span class="ic">🎰</span><span class="lb">Jackpot</span></button>
+    <button class="rbtn" onclick="openPanel('event')"><span class="bang">!</span><span class="ic">🎁</span><span class="lb">Event</span></button>
+    <button class="rbtn" onclick="openPanel('bonus')"><span class="ic">🪙</span><span class="lb">Bonus</span></button>
+    <button class="rbtn" onclick="openPanel('vip')"><span class="ic">👑</span><span class="lb">VIP Club</span></button>
+    <button class="rbtn" onclick="openPanel('wheel')"><span class="ic">🎡</span><span class="lb">Wheel</span></button>
+  </aside>
+
+  <!-- hero -->
+  <main class="hero">
+    <div class="crown">👑</div>
+    <h1 class="logo goldtext">ROYAL</h1>
+    <div class="logo-sub"><span>♦</span> CLUB <span>♦</span></div>
+    <div class="tagline">Experience the Ultimate Entertainment</div>
+
+    <button class="enter" onclick="openPanel('games')">ENTER GAME</button>
+
+    <button class="jack" onclick="openPanel('jackpot')">
+      <span class="gem">🔻</span>
+      <span class="side-coin l">💰</span><span class="side-coin r">🏆</span>
+      <div class="jt">GRAND JACKPOT</div>
+      <div class="jn goldtext mono" id="jackpotNum">88,888,888,888</div>
+    </button>
+
+    <div class="cards">
+      <button class="gcard" onclick="openGame('slots')"><span class="hot">777</span><div class="art">🎰</div><div class="plate">SLOTS</div></button>
+      <button class="gcard hotc" onclick="openGame('live')"><div class="art">🃏</div><div class="plate">LIVE GAMES</div></button>
+      <button class="gcard" onclick="openGame('baccarat')"><div class="art">🂡</div><div class="plate">BACCARAT</div></button>
+      <button class="gcard" onclick="openGame('fishing')"><div class="art">🦈</div><div class="plate">FISHING</div></button>
+      <button class="gcard" onclick="openGame('sports')"><div class="art">⚽</div><div class="plate">SPORTS</div></button>
+    </div>
+
+    <div class="demonote">🎮 Entertainment demo · virtual coins only · no real money</div>
+  </main>
+
+  <!-- right rail -->
+  <aside class="rail">
+    <button class="rbtn" onclick="openPanel('starter')"><span class="bang">!</span><span class="ic">🧰</span><span class="lb">Starter Pack</span></button>
+    <button class="rbtn" onclick="openPanel('wheel')"><span class="bang">!</span><span class="ic">🎡</span><span class="lb">Lucky Draw</span></button>
+    <button class="rbtn" onclick="openPanel('freecoins')"><span class="bang">!</span><span class="ic">💰</span><span class="lb">Free Coins</span></button>
+  </aside>
+</div>
+
+<!-- ================= BOTTOM NAV ================= -->
+<nav class="bottomnav" id="bnav">
+  <button class="nbtn on" data-nav="home" onclick="navTo('home')"><span class="ic">👑</span><span class="lb">Home</span></button>
+  <button class="nbtn" data-nav="games" onclick="navTo('games')"><span class="ic">🃏</span><span class="lb">Games</span></button>
+  <button class="nbtn" data-nav="bonus" onclick="navTo('bonus')"><span class="ic">🎁</span><span class="lb">Bonus</span></button>
+  <button class="nbtn vip" data-nav="vip" onclick="navTo('vip')"><span class="ring">👑</span><span class="lb">VIP</span></button>
+  <button class="nbtn" data-nav="friends" onclick="navTo('friends')"><span class="ic">👥</span><span class="lb">Friends</span></button>
+  <button class="nbtn" data-nav="profile" onclick="navTo('profile')"><span class="ic">👤</span><span class="lb">Profile</span></button>
+</nav>
+
+<!-- ================= MODAL ================= -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closePanel()">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-head"><h2 id="sheetTitle">—</h2><button class="xbtn" onclick="closePanel()" aria-label="Close">✕</button></div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   ROYAL CLUB — demo lobby. Virtual coins only, nothing real is wagered.
+===================================================================== */
+'use strict';
+
+/* ---------- state ---------- */
+const DEFAULTS = { coins: 500000, gems: 999, vip: 9, xp: 75, lastDaily: '', lastWheel: '', mailRead: [], sound: true };
+let S = load();
+function load(){
+  try{ const d = JSON.parse(localStorage.getItem('royalClubDemo') || 'null'); if(d) return Object.assign({}, DEFAULTS, d); }catch(e){}
+  return Object.assign({}, DEFAULTS);
+}
+function save(){ try{ localStorage.setItem('royalClubDemo', JSON.stringify(S)); }catch(e){} }
+
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('en-US');
+function setCoins(v, animate){
+  const el = $('coins'); const from = S.coins; S.coins = Math.max(0, v); save();
+  if(!animate){ el.textContent = fmt(S.coins); return; }
+  const t0 = performance.now(), dur = 600;
+  (function tick(t){ const p = Math.min(1,(t-t0)/dur);
+    el.textContent = fmt(from + (S.coins-from)*p);
+    if(p<1) requestAnimationFrame(tick); })(t0);
+}
+function addCoins(n){ setCoins(S.coins + n, true); }
+function spend(n){ if(S.coins < n){ toast('Not enough coins — grab some in Free Coins! 💰'); return false; } setCoins(S.coins - n); return true; }
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2400); }
+function beep(freq, dur){
+  if(!S.sound) return;
+  try{
+    const ctx = beep.ctx || (beep.ctx = new (window.AudioContext||window.webkitAudioContext)());
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = freq||880; o.type='triangle';
+    g.gain.setValueAtTime(.08, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + (dur||.15));
+    o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + (dur||.15));
+  }catch(e){}
+}
+const today = () => new Date().toISOString().slice(0,10);
+
+/* ---------- gold dust ---------- */
+(function(){
+  const box = $('dust');
+  for(let i=0;i<26;i++){
+    const p = document.createElement('i');
+    p.style.left = (Math.random()*100)+'%';
+    p.style.animationDuration = (7+Math.random()*9)+'s';
+    p.style.animationDelay = (Math.random()*10)+'s';
+    p.style.width = p.style.height = (2+Math.random()*4)+'px';
+    box.appendChild(p);
+  }
+})();
+
+/* ---------- jackpot ticker ---------- */
+let JACK = 88888888888;
+setInterval(()=>{ JACK += Math.floor(500 + Math.random()*8000); $('jackpotNum').textContent = fmt(JACK); }, 900);
+
+/* ---------- modal engine ---------- */
+let onPanelClose = null;
+function openPanel(id){
+  const p = PANELS[id]; if(!p) return;
+  if(onPanelClose){ onPanelClose(); onPanelClose = null; }
+  $('sheetTitle').textContent = p.title;
+  $('sheetBody').innerHTML = p.html();
+  $('overlay').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  if(p.init) p.init();
+}
+function closePanel(){
+  if(onPanelClose){ onPanelClose(); onPanelClose = null; }
+  $('overlay').classList.remove('on');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closePanel(); });
+function navTo(id){
+  document.querySelectorAll('#bnav .nbtn').forEach(b=>b.classList.toggle('on', b.dataset.nav===id));
+  if(id==='home'){ closePanel(); window.scrollTo({top:0, behavior:'smooth'}); return; }
+  openPanel(id);
+}
+function openGame(id){ openPanel(id); }
+
+/* =====================================================================
+   PANELS
+===================================================================== */
+const PANELS = {};
+
+/* ---------- GAMES HUB ---------- */
+PANELS.games = {
+  title: '🃏 GAME LOBBY',
+  html: () => `
+    <div class="grid2">
+      <button class="tile" onclick="openGame('slots')"><span class="big">🎰</span><b>ROYAL SLOTS</b><small>3-reel classic · jackpot 100×</small></button>
+      <button class="tile" onclick="openGame('live')"><span class="big">🃏</span><b>LIVE GAMES</b><small>Table lounge · pick a seat</small></button>
+      <button class="tile" onclick="openGame('baccarat')"><span class="big">🂡</span><b>BACCARAT</b><small>Player · Banker · Tie</small></button>
+      <button class="tile" onclick="openGame('fishing')"><span class="big">🦈</span><b>GOLD FISHING</b><small>Catch fish, win coins</small></button>
+      <button class="tile" onclick="openGame('sports')"><span class="big">⚽</span><b>SPORTS ARENA</b><small>Pick winners · demo odds</small></button>
+      <button class="tile" onclick="openGame('wheel')"><span class="big">🎡</span><b>LUCKY WHEEL</b><small>Free daily spin</small></button>
+    </div>
+    <div class="note">All games use virtual coins for entertainment only. Results are random — no real money is ever involved.</div>`
+};
+
+/* ---------- SLOTS ---------- */
+const SLOT_SYM = ['🍒','🍋','🔔','⭐','7️⃣','💎','🍉','👑'];
+const SLOT_PAY = { '👑':100, '💎':60, '7️⃣':40, '⭐':20, '🔔':15 };
+let slotBet = 100;
+PANELS.slots = {
+  title: '🎰 ROYAL SLOTS',
+  html: () => `
+    <div class="reels">
+      <div class="reel" id="sl0"><span>👑</span></div>
+      <div class="reel" id="sl1"><span>7️⃣</span></div>
+      <div class="reel" id="sl2"><span>💎</span></div>
+    </div>
+    <div class="betbar" id="slotBets"></div>
+    <button class="gbtn red wide" id="slotGo" onclick="slotSpin()" style="font-family:'Cinzel',serif;letter-spacing:3px;font-size:17px">SPIN</button>
+    <div class="result" id="slotRes"></div>
+    <div class="note">Three of a kind pays 10×–100× your bet · any pair pays 2× · 👑👑👑 hits the 100× royal jackpot.</div>`,
+  init: () => betBar('slotBets', v=>slotBet=v, ()=>slotBet)
+};
+function betBar(id, set, get){
+  const box = $(id); box.innerHTML='';
+  [100,500,1000,5000].forEach(v=>{
+    const b = document.createElement('button');
+    b.className = 'betchip' + (get()===v?' on':'');
+    b.textContent = '🪙 ' + fmt(v);
+    b.onclick = ()=>{ set(v); box.querySelectorAll('.betchip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+    box.appendChild(b);
+  });
+}
+function slotSpin(){
+  if(!spend(slotBet)) return;
+  beep(520,.1);
+  const reels = [0,1,2].map(i=>$('sl'+i));
+  const res = [0,1,2].map(()=>SLOT_SYM[Math.floor(Math.random()*SLOT_SYM.length)]);
+  $('slotGo').disabled = true; $('slotRes').textContent='';
+  reels.forEach(r=>r.classList.add('rolling'));
+  let done = 0;
+  reels.forEach((r,i)=>setTimeout(()=>{
+    r.classList.remove('rolling'); r.querySelector('span').textContent = res[i]; beep(700+i*120,.08);
+    if(++done===3) slotSettle(res);
+  }, 500 + i*350));
+}
+function slotSettle(res){
+  $('slotGo').disabled = false;
+  let mult = 0;
+  if(res[0]===res[1] && res[1]===res[2]) mult = SLOT_PAY[res[0]] || 10;
+  else if(res[0]===res[1] || res[1]===res[2] || res[0]===res[2]) mult = 2;
+  const el = $('slotRes');
+  if(mult){
+    const win = slotBet*mult; addCoins(win); beep(1200,.3);
+    el.className='result win'; el.textContent = `${res.join(' ')}  ·  ${mult}× WIN  +${fmt(win)} 🪙`;
+    if(mult>=100) toast('👑 ROYAL JACKPOT!!! 👑');
+  } else {
+    el.className='result lose'; el.textContent = `${res.join(' ')}  ·  so close! try again`;
+  }
+}
+
+/* ---------- LIVE LOUNGE ---------- */
+PANELS.live = {
+  title: '🃏 LIVE LOUNGE',
+  html: () => `
+    <div class="grid2">
+      <button class="tile" onclick="openGame('baccarat')"><span class="big">🂡</span><b>BACCARAT · TABLE 1</b><small>Dealer Rose · 12 seated</small></button>
+      <button class="tile" onclick="openGame('baccarat')"><span class="big">🂱</span><b>BACCARAT · VIP</b><small>Dealer Lily · 3 seated</small></button>
+      <button class="tile" onclick="toast('This table opens in a future update 🛠️')"><span class="big">🎡</span><b>ROULETTE</b><small>Coming soon</small></button>
+      <button class="tile" onclick="toast('This table opens in a future update 🛠️')"><span class="big">🎲</span><b>SIC BO</b><small>Coming soon</small></button>
+    </div>
+    <div class="note">Live tables are simulated for the demo — the dealer is a friendly random number generator in a bow tie.</div>`
+};
+
+/* ---------- BACCARAT ---------- */
+let baccBet = 100, baccPick = 'player', baccBusy = false;
+PANELS.baccarat = {
+  title: '🂡 BACCARAT ROYALE',
+  html: () => `
+    <div class="handlbl">BANKER <b id="bScore"></b></div>
+    <div class="bhand" id="bHand"></div>
+    <div class="handlbl">PLAYER <b id="pScore"></b></div>
+    <div class="bhand" id="pHand"></div>
+    <div class="bacc-opts" id="baccOpts">
+      <button class="betchip" data-p="player">PLAYER 1:1</button>
+      <button class="betchip" data-p="banker">BANKER 0.95:1</button>
+      <button class="betchip" data-p="tie">TIE 8:1</button>
+    </div>
+    <div class="betbar" id="baccBets"></div>
+    <button class="gbtn red wide" id="baccGo" onclick="baccDeal()" style="font-family:'Cinzel',serif;letter-spacing:3px;font-size:16px">DEAL</button>
+    <div class="result" id="baccRes"></div>
+    <div class="note">Simplified baccarat demo: closest hand to 9 wins. Tens and face cards count as zero.</div>`,
+  init: () => {
+    betBar('baccBets', v=>baccBet=v, ()=>baccBet);
+    baccBusy = false;
+    document.querySelectorAll('#baccOpts .betchip').forEach(b=>{
+      b.classList.toggle('on', b.dataset.p===baccPick);
+      b.onclick = ()=>{ baccPick = b.dataset.p;
+        document.querySelectorAll('#baccOpts .betchip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+    });
+  }
+};
+function baccCard(){
+  const r = 1 + Math.floor(Math.random()*13);
+  const suits = ['♠','♥','♦','♣']; const s = suits[Math.floor(Math.random()*4)];
+  const face = r===1?'A':r===11?'J':r===12?'Q':r===13?'K':r;
+  return { v: r>=10?0:r, txt: face+s, red: s==='♥'||s==='♦' };
+}
+const baccVal = h => h.reduce((t,c)=>t+c.v,0) % 10;
+function baccRender(id, hand){
+  $(id).innerHTML = hand.map(c=>`<div class="pcard${c.red?' redc':''}">${c.txt}</div>`).join('');
+}
+function baccDeal(){
+  if(baccBusy) return;
+  if(!spend(baccBet)) return;
+  baccBusy = true; $('baccGo').disabled = true; $('baccRes').textContent='';
+  const P = [baccCard(), baccCard()], B = [baccCard(), baccCard()];
+  // simplified third-card: draw on 0-5 unless either side has a natural 8/9
+  const natural = baccVal(P)>=8 || baccVal(B)>=8;
+  if(!natural && baccVal(P)<=5) P.push(baccCard());
+  if(!natural && baccVal(B)<=5) B.push(baccCard());
+  $('pHand').innerHTML = ''; $('bHand').innerHTML = '';
+  $('pScore').textContent=''; $('bScore').textContent='';
+  let step = 0;
+  const seq = [
+    ()=>{ baccRender('pHand', P.slice(0,2)); beep(600,.08); },
+    ()=>{ baccRender('bHand', B.slice(0,2)); beep(600,.08); },
+    ()=>{ baccRender('pHand', P); baccRender('bHand', B); $('pScore').textContent=baccVal(P); $('bScore').textContent=baccVal(B); beep(760,.08); },
+    ()=>baccSettle(baccVal(P), baccVal(B))
+  ];
+  const t = setInterval(()=>{ seq[step++](); if(step>=seq.length) clearInterval(t); }, 550);
+}
+function baccSettle(p, b){
+  const winner = p===b?'tie':(p>b?'player':'banker');
+  const el = $('baccRes');
+  if(winner === baccPick){
+    const mult = winner==='tie'?8 : winner==='banker'?0.95 : 1;
+    const win = Math.round(baccBet*(1+mult)); addCoins(win); beep(1200,.3);
+    el.className='result win';
+    el.textContent = `${winner.toUpperCase()} wins ${p} vs ${b} · +${fmt(win-baccBet)} 🪙`;
+  } else {
+    el.className='result lose';
+    el.textContent = `${winner.toUpperCase()} wins ${p} vs ${b} · better luck next hand`;
+  }
+  baccBusy = false; $('baccGo').disabled = false;
+}
+
+/* ---------- FISHING ---------- */
+const FISH = [
+  {e:'🐠', v:20,  spd:9},
+  {e:'🐟', v:30,  spd:8},
+  {e:'🐡', v:60,  spd:7},
+  {e:'🦑', v:100, spd:6},
+  {e:'🦈', v:300, spd:5},
+  {e:'🐋', v:800, spd:11}
+];
+const FISH_COST = 25;
+let fishTimer = null, fishCaught = 0, fishSpent = 0, fishWon = 0;
+PANELS.fishing = {
+  title: '🦈 GOLD FISHING',
+  html: () => `
+    <div class="hud"><span>Cost per catch: <b>🪙 ${FISH_COST}</b></span><span>Session: <b id="fishStat">0 caught</b></span></div>
+    <div class="pond" id="pond"></div>
+    <div class="note">Tap a fish to catch it — each attempt costs ${FISH_COST} coins and every fish pays its bounty: 🐠20 🐟30 🐡60 🦑100 🦈300 🐋800.</div>`,
+  init: () => {
+    fishCaught = 0; fishSpent = 0; fishWon = 0;
+    const pond = $('pond');
+    const spawn = () => {
+      if(!document.body.contains(pond)) return;
+      const f = FISH[Math.floor(Math.random()*FISH.length)];
+      const el = document.createElement('span');
+      el.className = 'fish'; el.textContent = f.e;
+      const fromLeft = Math.random() < .5;
+      const W = pond.clientWidth || 300;
+      el.style.top = (8 + Math.random()*78) + '%';
+      el.style.left = fromLeft ? '-40px' : (W+10)+'px';
+      el.style.setProperty('--dx', (fromLeft? W+80 : -(W+80)) + 'px');
+      el.style.animationDuration = (f.spd + Math.random()*3) + 's';
+      if(!fromLeft) el.style.scale = '-1 1';
+      el.onclick = ev => {
+        ev.stopPropagation();
+        if(!spend(FISH_COST)) return;
+        fishSpent += FISH_COST; fishCaught++; fishWon += f.v;
+        addCoins(f.v); beep(1000,.12);
+        splash(pond, el.offsetLeft, el.offsetTop, '💰+'+f.v);
+        el.remove();
+        const net = fishWon - fishSpent;
+        $('fishStat').textContent = `${fishCaught} caught · net ${net>=0?'+':''}${fmt(net)}`;
+      };
+      el.addEventListener('animationend', ()=>el.remove());
+      pond.appendChild(el);
+    };
+    pond.addEventListener('click', ev => splash(pond, ev.offsetX, ev.offsetY, '💦'));
+    fishTimer = setInterval(spawn, 900);
+    spawn(); spawn();
+    onPanelClose = () => { clearInterval(fishTimer); fishTimer=null; };
+  }
+};
+function splash(pond, x, y, txt){
+  const s = document.createElement('span');
+  s.className='splash'; s.textContent=txt;
+  s.style.left = (x)+'px'; s.style.top = (y)+'px';
+  s.style.color = '#ffe9a8'; s.style.fontWeight='800';
+  pond.appendChild(s); setTimeout(()=>s.remove(), 650);
+}
+
+/* ---------- SPORTS ---------- */
+const MATCHES = [
+  { a:['🦁','Lions'],   b:['🦅','Eagles'],  oa:1.8, ob:2.1 },
+  { a:['🐉','Dragons'], b:['🐺','Wolves'],  oa:2.4, ob:1.6 },
+  { a:['⚡','Bolts'],   b:['🔥','Flames'],  oa:1.9, ob:1.9 }
+];
+let sportPicks = {};
+PANELS.sports = {
+  title: '⚽ SPORTS ARENA',
+  html: () => `
+    <div id="matchList">${MATCHES.map((m,i)=>`
+      <div class="match">
+        <div class="team"><span class="fl">${m.a[0]}</span><span>${m.a[1]}</span>
+          <button data-m="${i}" data-s="a" onclick="sportPick(this)">win ×${m.oa}</button></div>
+        <div class="vs">VS</div>
+        <div class="team"><span class="fl">${m.b[0]}</span><span>${m.b[1]}</span>
+          <button data-m="${i}" data-s="b" onclick="sportPick(this)">win ×${m.ob}</button></div>
+      </div>`).join('')}
+    </div>
+    <div class="betbar" id="sportBets"></div>
+    <button class="gbtn red wide" onclick="sportPlay()" style="font-family:'Cinzel',serif;letter-spacing:3px">KICK OFF</button>
+    <div class="result" id="sportRes"></div>
+    <div class="note">Pick a winner in one or more matches, then Kick Off. Each pick stakes your bet at the shown multiplier. Pure luck, pure demo.</div>`,
+  init: () => { sportPicks = {}; betBar('sportBets', v=>sportBet=v, ()=>sportBet); }
+};
+let sportBet = 100;
+function sportPick(btn){
+  const m = btn.dataset.m;
+  const same = sportPicks[m]===btn.dataset.s;
+  document.querySelectorAll(`#matchList button[data-m="${m}"]`).forEach(x=>x.classList.remove('on'));
+  if(same){ delete sportPicks[m]; } else { sportPicks[m]=btn.dataset.s; btn.classList.add('on'); }
+}
+function sportPlay(){
+  const picks = Object.entries(sportPicks);
+  if(!picks.length){ toast('Pick at least one team first! ⚽'); return; }
+  const cost = sportBet * picks.length;
+  if(!spend(cost)) return;
+  beep(500,.12);
+  let winTotal = 0, lines = [];
+  picks.forEach(([mi, side])=>{
+    const m = MATCHES[mi];
+    const pa = m.ob/(m.oa+m.ob);           // implied prob favors lower multiplier
+    const winner = Math.random() < pa ? 'a' : 'b';
+    const name = winner==='a'?m.a[1]:m.b[1];
+    if(winner===side){ const w = Math.round(sportBet * (winner==='a'?m.oa:m.ob)); winTotal += w; lines.push(`✅ ${name} won (+${fmt(w)})`); }
+    else lines.push(`❌ ${name} won`);
+  });
+  if(winTotal) { addCoins(winTotal); beep(1200,.3); }
+  const el = $('sportRes');
+  el.className = 'result ' + (winTotal>=cost?'win':'lose');
+  el.textContent = lines.join('  ·  ') + `  ·  net ${winTotal-cost>=0?'+':''}${fmt(winTotal-cost)} 🪙`;
+}
+
+/* ---------- LUCKY WHEEL ---------- */
+const WHEEL_PRIZES = [5000, 500, 10000, 1000, 25000, 2000, 88888, 100];
+let wheelSpinning = false, wheelAngle = 0;
+PANELS.wheel = {
+  title: '🎡 LUCKY WHEEL',
+  html: () => `
+    <div class="wheelbox">
+      <span class="wheel-pin">🔻</span>
+      <div class="wheel" id="wheelDisc"></div>
+      <span class="wheel-hub">👑</span>
+    </div>
+    <button class="gbtn red wide" id="wheelGo" onclick="wheelSpin()" style="font-family:'Cinzel',serif;letter-spacing:3px;font-size:16px">
+      ${S.lastWheel===today() ? 'SPIN · 🪙 2,000' : 'FREE DAILY SPIN'}</button>
+    <div class="result" id="wheelRes"></div>
+    <div class="note">One free spin per day — extra spins cost 2,000 coins. Prizes from 100 up to the 88,888 royal pot.</div>`,
+  init: () => {
+    const disc = $('wheelDisc'); wheelAngle = 0; wheelSpinning = false;
+    disc.style.transition='none'; disc.style.transform='rotate(0deg)';
+    WHEEL_PRIZES.forEach((p,i)=>{
+      const lbl = document.createElement('span');
+      lbl.textContent = fmt(p);
+      const ang = i*45 + 22.5;
+      lbl.style.transform = `rotate(${ang-90}deg) translate(58px,-7px)`;
+      disc.appendChild(lbl);
+    });
+  }
+};
+function wheelSpin(){
+  if(wheelSpinning) return;
+  const free = S.lastWheel !== today();
+  if(!free && !spend(2000)) return;
+  if(free){ S.lastWheel = today(); save(); }
+  wheelSpinning = true; $('wheelRes').textContent=''; beep(440,.15);
+  const idx = Math.floor(Math.random()*8);
+  // pointer is at top; rotate so winning segment center lands under it
+  const target = 360*4 + (360 - (idx*45 + 22.5));
+  wheelAngle += target - (wheelAngle % 360);
+  const disc = $('wheelDisc');
+  disc.style.transition='transform 3.4s cubic-bezier(.15,.85,.25,1)';
+  disc.style.transform = `rotate(${wheelAngle}deg)`;
+  setTimeout(()=>{
+    const prize = WHEEL_PRIZES[idx];
+    addCoins(prize); beep(1300,.35);
+    const el = $('wheelRes'); el.className='result win';
+    el.textContent = `🎉 You won ${fmt(prize)} coins!`;
+    $('wheelGo').textContent = 'SPIN · 🪙 2,000';
+    wheelSpinning = false;
+  }, 3500);
+}
+
+/* ---------- JACKPOT ---------- */
+PANELS.jackpot = {
+  title: '🎰 GRAND JACKPOT',
+  html: () => `
+    <div class="center">
+      <div style="font-size:44px">💰</div>
+      <div class="jn goldtext mono" style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:36px;letter-spacing:2px" id="jackpotNum2">${fmt(JACK)}</div>
+      <p style="color:var(--muted);font-size:13px;line-height:1.6">The Grand Jackpot grows every second across all demo games.<br>Hit 👑👑👑 on Royal Slots for the biggest win in the club.</p>
+      <button class="gbtn red" onclick="openGame('slots')" style="font-family:'Cinzel',serif;letter-spacing:2px">TRY YOUR LUCK</button>
+    </div>
+    <div style="margin-top:16px">
+      <div class="listrow"><span class="ic">👑</span><span class="tx"><b>Lucky_Dragon88</b><small>won 8,888,888 on Royal Slots</small></span><span style="color:var(--win);font-weight:800">2m ago</span></div>
+      <div class="listrow"><span class="ic">💎</span><span class="tx"><b>GoldenPhoenix</b><small>won 2,450,000 on Baccarat</small></span><span style="color:var(--win);font-weight:800">11m ago</span></div>
+      <div class="listrow"><span class="ic">🦈</span><span class="tx"><b>SeaKing_777</b><small>caught the Golden Whale · 500,000</small></span><span style="color:var(--win);font-weight:800">26m ago</span></div>
+    </div>
+    <div class="note">Winner feed is simulated for atmosphere — everything here is fictional and for fun.</div>`,
+  init: () => {
+    const t = setInterval(()=>{ const el=$('jackpotNum2'); if(!el){clearInterval(t);return;} el.textContent=fmt(JACK); }, 900);
+    onPanelClose = () => clearInterval(t);
+  }
+};
+
+/* ---------- DAILY ---------- */
+const DAILY_REWARDS = [5000, 8000, 12000, 20000, 30000, 50000, 100000];
+PANELS.daily = {
+  title: '🎁 DAILY REWARDS',
+  html: () => {
+    const claimed = S.lastDaily === today();
+    const dayIdx = (new Date().getDay()) % 7;
+    return `
+    <div class="days">${DAILY_REWARDS.map((r,i)=>`
+      <div class="day ${i===dayIdx?'today':''} ${i<dayIdx||(i===dayIdx&&claimed)?'claimed':''}">
+        <div class="d">DAY ${i+1}</div><div class="ic">${i===6?'👑':i>=4?'💎':'🪙'}</div>
+        <div class="amt">${fmt(r)}</div>
+      </div>`).join('')}
+    </div>
+    <div style="margin-top:14px" class="center">
+      <button class="gbtn wide" id="dailyGo" onclick="claimDaily()" ${claimed?'disabled':''}>
+        ${claimed ? '✓ CLAIMED — COME BACK TOMORROW' : `CLAIM ${fmt(DAILY_REWARDS[dayIdx])} COINS`}</button>
+    </div>
+    <div class="note">Log in every day to climb the reward ladder. Day 7 pays the royal 100,000 bonus.</div>`;
+  }
+};
+function claimDaily(){
+  if(S.lastDaily === today()) return;
+  const r = DAILY_REWARDS[(new Date().getDay())%7];
+  S.lastDaily = today(); save();
+  addCoins(r); beep(1200,.3);
+  toast(`🎁 Daily reward claimed: +${fmt(r)} coins!`);
+  $('dailyDot').style.display='none';
+  openPanel('daily');
+}
+
+/* ---------- RANKING ---------- */
+PANELS.ranking = {
+  title: '🏆 WEEKLY RANKING',
+  html: () => {
+    const rows = [
+      ['🥇','Lucky_Dragon88', 45123000], ['🥈','GoldenPhoenix', 38044200], ['🥉','MidnightRose', 30110550],
+      ['4','SeaKing_777', 21540000], ['5','JadeEmpress', 18002300], ['6','BigWave_Rick', 12400900]
+    ].map(([p,n,s])=>`<div class="rankrow"><span class="pos">${p}</span><span class="nm">${n}</span><span class="sc mono">${fmt(s)}</span></div>`).join('');
+    return rows + `
+    <div class="rankrow me"><span class="pos">42</span><span class="nm">PLAYER888 (you)</span><span class="sc mono">${fmt(S.coins)}</span></div>
+    <div class="note">Rankings reset every Monday. Leaderboard names are fictional demo data.</div>`;
+  }
+};
+
+/* ---------- MAIL ---------- */
+const MAILS = [
+  { id:'m1', ic:'👑', from:'Royal Club', sub:'Welcome to the Club!', body:'Your VIP 9 privileges are active. Enjoy your stay, PLAYER888!' },
+  { id:'m2', ic:'🎁', from:'Rewards Team', sub:'Your weekend bonus is ready', body:'Claim 25,000 bonus coins — attached below.', gift:25000 },
+  { id:'m3', ic:'🎡', from:'Events', sub:'Lucky Wheel doubled prizes', body:'This week only: wheel prizes hit up to 88,888 coins. Spin daily!' }
+];
+PANELS.mail = {
+  title: '✉️ INBOX',
+  html: () => MAILS.map(m=>{
+    const read = S.mailRead.includes(m.id);
+    return `<div class="listrow" style="${read?'opacity:.55':''}">
+      <span class="ic">${m.ic}</span>
+      <span class="tx"><b>${m.sub}</b><small>${m.from} — ${m.body}</small></span>
+      ${m.gift && !read ? `<button class="gbtn" style="padding:8px 14px;font-size:12px" onclick="mailClaim('${m.id}',${m.gift})">+${fmt(m.gift)}</button>`
+        : `<button class="gbtn ghost" style="padding:8px 14px;font-size:12px" onclick="mailRead('${m.id}')">${read?'✓':'READ'}</button>`}
+    </div>`;
+  }).join('') + `<div class="note">Demo inbox — messages are canned examples.</div>`
+};
+function mailRead(id){ if(!S.mailRead.includes(id)){ S.mailRead.push(id); save(); updateMailDot(); } openPanel('mail'); }
+function mailClaim(id, gift){ mailRead(id); addCoins(gift); beep(1200,.3); toast(`✉️ +${fmt(gift)} coins from your mail!`); openPanel('mail'); }
+function updateMailDot(){
+  const unread = MAILS.filter(m=>!S.mailRead.includes(m.id)).length;
+  $('mailDot').textContent = unread; $('mailDot').style.display = unread?'grid':'none';
+}
+
+/* ---------- BONUS ---------- */
+PANELS.bonus = {
+  title: '🪙 BONUS CENTER',
+  html: () => `
+    <div class="grid2">
+      <button class="tile" onclick="openPanel('daily')"><span class="big">🎁</span><b>DAILY REWARD</b><small>Free coins every day</small></button>
+      <button class="tile" onclick="openPanel('wheel')"><span class="big">🎡</span><b>LUCKY WHEEL</b><small>Free spin daily</small></button>
+      <button class="tile" onclick="openPanel('freecoins')"><span class="big">💰</span><b>FREE COINS</b><small>Rescue pack when low</small></button>
+      <button class="tile" onclick="openPanel('starter')"><span class="big">🧰</span><b>STARTER PACK</b><small>One-time boost</small></button>
+    </div>
+    <div class="note">Every bonus is free virtual currency — this demo has no purchases, deposits or cash-out. It's all just for fun.</div>`
+};
+
+/* ---------- FREE COINS ---------- */
+PANELS.freecoins = {
+  title: '💰 FREE COINS',
+  html: () => `
+    <div class="center">
+      <div style="font-size:52px">💰</div>
+      <p style="color:var(--muted);font-size:13.5px;line-height:1.6">Running low? The Royal treasury has you covered.<br>Grab a rescue pack of <b class="goldtext" style="font-weight:800">50,000</b> virtual coins.</p>
+      <button class="gbtn wide" onclick="addCoins(50000);beep(1200,.3);toast('💰 +50,000 coins added!');closePanel()">COLLECT 50,000 🪙</button>
+    </div>
+    <div class="note">Unlimited refills — because none of it is real money.</div>`
+};
+
+/* ---------- STARTER PACK ---------- */
+PANELS.starter = {
+  title: '🧰 STARTER PACK',
+  html: () => `
+    <div class="center">
+      <div style="font-size:52px">🧰</div>
+      <p style="color:var(--muted);font-size:13.5px;line-height:1.6">A royal welcome bundle:<br><b class="goldtext" style="font-weight:800;font-size:17px">200,000 🪙 + 500 💎</b></p>
+      <button class="gbtn wide" onclick="addCoins(200000);S.gems+=500;save();renderGems();beep(1300,.35);toast('🧰 Starter pack opened!');closePanel()">OPEN PACK — FREE</button>
+    </div>
+    <div class="note">In this demo the "top-up" is a free gift. No payments exist anywhere in this app.</div>`
+};
+
+/* ---------- EVENT ---------- */
+PANELS.event = {
+  title: '🎉 EVENTS',
+  html: () => `
+    <div class="listrow"><span class="ic">🐉</span><span class="tx"><b>Golden Dragon Festival</b><small>All slot wins pay double this weekend · ends Sunday</small></span></div>
+    <div class="listrow"><span class="ic">🦈</span><span class="tx"><b>Whale Hunt</b><small>Catch 10 whales in Gold Fishing for a 100,000 bounty</small></span></div>
+    <div class="listrow"><span class="ic">🏆</span><span class="tx"><b>Weekly Tournament</b><small>Top 10 on the leaderboard split 5,000,000 coins</small></span></div>
+    <div class="listrow"><span class="ic">🎡</span><span class="tx"><b>Wheel Frenzy</b><small>Lucky Wheel max prize boosted to 88,888</small></span></div>
+    <div class="note">Event banners are decorative demo content — but the games really do work!</div>`
+};
+
+/* ---------- VIP ---------- */
+PANELS.vip = {
+  title: '👑 VIP CLUB',
+  html: () => `
+    <div class="center" style="margin-bottom:12px">
+      <div style="font-size:44px">👑</div>
+      <div style="font-family:'Cinzel',serif;font-weight:800;letter-spacing:2px;font-size:18px" class="goldtext">VIP LEVEL ${S.vip}</div>
+      <div class="xpbar" style="width:180px;margin:8px auto"><b style="width:${S.xp}%"></b></div>
+      <small style="color:var(--muted)">${S.xp}% to VIP ${S.vip+1}</small>
+    </div>
+    <div class="listrow"><span class="ic">🪙</span><span class="tx"><b>Daily bonus ×${(1+S.vip*0.25).toFixed(2)}</b><small>VIP multiplier on all daily rewards</small></span></div>
+    <div class="listrow"><span class="ic">🎡</span><span class="tx"><b>+1 wheel spin</b><small>Extra free Lucky Wheel spin at VIP 10</small></span></div>
+    <div class="listrow"><span class="ic">🃏</span><span class="tx"><b>VIP Baccarat lounge</b><small>Exclusive high-bet tables</small></span></div>
+    <div class="listrow"><span class="ic">🛎️</span><span class="tx"><b>Royal concierge</b><small>Priority support (they mostly send confetti)</small></span></div>
+    <div class="note">VIP levels are cosmetic in this demo — play any game to feel fancier immediately.</div>`
+};
+
+/* ---------- FRIENDS ---------- */
+PANELS.friends = {
+  title: '👥 FRIENDS',
+  html: () => `
+    <div class="listrow"><span class="ic">🐉</span><span class="tx"><b>Lucky_Dragon88</b><small>Playing Royal Slots · online</small></span><button class="gbtn ghost" style="padding:7px 12px;font-size:12px" onclick="toast('👋 Wave sent!')">WAVE</button></div>
+    <div class="listrow"><span class="ic">🌹</span><span class="tx"><b>MidnightRose</b><small>In the Live Lounge · online</small></span><button class="gbtn ghost" style="padding:7px 12px;font-size:12px" onclick="toast('👋 Wave sent!')">WAVE</button></div>
+    <div class="listrow"><span class="ic">🦈</span><span class="tx"><b>SeaKing_777</b><small>Last seen 2h ago</small></span><button class="gbtn ghost" style="padding:7px 12px;font-size:12px" onclick="toast('🎁 Gift of 1,000 coins sent!')">GIFT</button></div>
+    <div class="center" style="margin-top:14px">
+      <button class="gbtn" onclick="toast('🔗 Demo invite link copied (pretend)!')">➕ INVITE A FRIEND · +10,000 🪙</button>
+    </div>
+    <div class="note">Friends list is simulated — no real accounts, chat or data behind it.</div>`
+};
+
+/* ---------- PROFILE ---------- */
+PANELS.profile = {
+  title: '👤 PROFILE',
+  html: () => `
+    <div class="center" style="margin-bottom:12px">
+      <div class="avatar" style="width:72px;height:72px;font-size:36px;margin:0 auto">👤</div>
+      <div style="font-weight:800;font-size:18px;margin-top:8px">PLAYER888</div>
+      <span class="vipchip">VIP ${S.vip}</span>
+    </div>
+    <div class="listrow"><span class="ic">🪙</span><span class="tx"><b>Coin balance</b></span><span class="sc mono goldtext" style="font-weight:800">${fmt(S.coins)}</span></div>
+    <div class="listrow"><span class="ic">💎</span><span class="tx"><b>Gems</b></span><span class="sc mono" style="color:#ff7d8a;font-weight:800">${fmt(S.gems)}</span></div>
+    <div class="listrow"><span class="ic">📅</span><span class="tx"><b>Member since</b></span><span style="color:var(--muted)">Aug 2026</span></div>
+    <div class="listrow"><span class="ic">🏆</span><span class="tx"><b>Weekly rank</b></span><span style="color:var(--muted)">#42</span></div>
+    <div class="center" style="margin-top:14px">
+      <button class="gbtn ghost" onclick="toast('✏️ Avatar editing coming soon!')">EDIT AVATAR</button>
+    </div>`
+};
+
+/* ---------- SETTINGS ---------- */
+PANELS.settings = {
+  title: '⚙️ SETTINGS',
+  html: () => `
+    <div class="listrow"><span class="ic">🔊</span><span class="tx"><b>Sound effects</b><small>Little beeps of joy</small></span>
+      <button class="gbtn ghost" id="sndBtn" onclick="toggleSound()" style="padding:8px 16px;font-size:12px">${S.sound?'ON':'OFF'}</button></div>
+    <div class="listrow"><span class="ic">🔄</span><span class="tx"><b>Reset demo</b><small>Restore default coins &amp; progress</small></span>
+      <button class="gbtn red" onclick="resetDemo()" style="padding:8px 16px;font-size:12px">RESET</button></div>
+    <div class="listrow"><span class="ic">ℹ️</span><span class="tx"><b>About</b><small>Royal Club demo lobby · single-file HTML/CSS/JS · entertainment only, no real-money gambling</small></span></div>`
+};
+function toggleSound(){ S.sound = !S.sound; save(); $('sndBtn').textContent = S.sound?'ON':'OFF'; if(S.sound) beep(880,.12); }
+function resetDemo(){ S = Object.assign({}, DEFAULTS); save(); renderAll(); toast('🔄 Demo reset — welcome back to the club!'); openPanel('settings'); }
+
+/* ---------- boot ---------- */
+function renderGems(){ $('gems').textContent = fmt(S.gems); }
+function renderAll(){
+  $('coins').textContent = fmt(S.coins);
+  renderGems();
+  $('viplvl').textContent = S.vip;
+  $('vipxp').style.width = S.xp + '%';
+  $('dailyDot').style.display = S.lastDaily === today() ? 'none' : 'grid';
+  updateMailDot();
+}
+renderAll();
+</script>
+</body>
+</html>
