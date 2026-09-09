@@ -459,6 +459,19 @@ button.tile:hover{border-color:var(--gold);transform:translateY(-3px)}
 'use strict';
 
 /* ---------- state ---------- */
+const ADMIN_DEFAULTS = {
+  slotBets:[100,500,1000,5000], baccBets:[100,500,1000,5000], sportBets:[100,500,1000,5000],
+  slotPay:{'👑':100,'💎':60,'7️⃣':40,'⭐':20,'🔔':15},
+  slotWeights:{'🍒':18,'🍋':18,'🔔':15,'⭐':13,'7️⃣':11,'💎':8,'🍉':12,'👑':5},
+  baccarat:{player:1,banker:.95,tie:8},
+  wheelPrizes:[5000,500,10000,1000,25000,2000,88888,100],
+  dailyRewards:[5000,8000,12000,20000,30000,50000,100000]
+};
+function loadAdminConfig(){
+  try{ const d=JSON.parse(localStorage.getItem('royalClubAdminConfig')||'null'); if(d) return Object.assign({},ADMIN_DEFAULTS,d); }catch(e){}
+  return JSON.parse(JSON.stringify(ADMIN_DEFAULTS));
+}
+const CFG=loadAdminConfig();
 const DEFAULTS = { coins: 500000, gems: 999, vip: 9, xp: 75, lastDaily: '', lastWheel: '', mailRead: [], sound: true };
 let S = load();
 function load(){
@@ -556,7 +569,7 @@ PANELS.games = {
 
 /* ---------- SLOTS ---------- */
 const SLOT_SYM = ['🍒','🍋','🔔','⭐','7️⃣','💎','🍉','👑'];
-const SLOT_PAY = { '👑':100, '💎':60, '7️⃣':40, '⭐':20, '🔔':15 };
+const SLOT_PAY = CFG.slotPay;
 let slotBet = 100;
 PANELS.slots = {
   title: '🎰 ROYAL SLOTS',
@@ -570,11 +583,11 @@ PANELS.slots = {
     <button class="gbtn red wide" id="slotGo" onclick="slotSpin()" style="font-family:'Cinzel',serif;letter-spacing:3px;font-size:17px">SPIN</button>
     <div class="result" id="slotRes"></div>
     <div class="note">Three of a kind pays 10×–100× your bet · any pair pays 2× · 👑👑👑 hits the 100× royal jackpot.</div>`,
-  init: () => betBar('slotBets', v=>slotBet=v, ()=>slotBet)
+  init: () => betBar('slotBets', v=>slotBet=v, ()=>slotBet, CFG.slotBets)
 };
-function betBar(id, set, get){
+function betBar(id, set, get, values){
   const box = $(id); box.innerHTML='';
-  [100,500,1000,5000].forEach(v=>{
+  (values||[100,500,1000,5000]).forEach(v=>{
     const b = document.createElement('button');
     b.className = 'betchip' + (get()===v?' on':'');
     b.textContent = '🪙 ' + fmt(v);
@@ -586,7 +599,8 @@ function slotSpin(){
   if(!spend(slotBet)) return;
   beep(520,.1);
   const reels = [0,1,2].map(i=>$('sl'+i));
-  const res = [0,1,2].map(()=>SLOT_SYM[Math.floor(Math.random()*SLOT_SYM.length)]);
+  const weightedSymbol=()=>{ const total=SLOT_SYM.reduce((n,s)=>n+(Number(CFG.slotWeights[s])||1),0); let roll=Math.random()*total; for(const s of SLOT_SYM){roll-=Number(CFG.slotWeights[s])||1;if(roll<=0)return s;} return SLOT_SYM[0]; };
+  const res = [0,1,2].map(weightedSymbol);
   $('slotGo').disabled = true; $('slotRes').textContent='';
   reels.forEach(r=>r.classList.add('rolling'));
   let done = 0;
@@ -633,16 +647,16 @@ PANELS.baccarat = {
     <div class="handlbl">PLAYER <b id="pScore"></b></div>
     <div class="bhand" id="pHand"></div>
     <div class="bacc-opts" id="baccOpts">
-      <button class="betchip" data-p="player">PLAYER 1:1</button>
-      <button class="betchip" data-p="banker">BANKER 0.95:1</button>
-      <button class="betchip" data-p="tie">TIE 8:1</button>
+      <button class="betchip" data-p="player">PLAYER ${CFG.baccarat.player}:1</button>
+      <button class="betchip" data-p="banker">BANKER ${CFG.baccarat.banker}:1</button>
+      <button class="betchip" data-p="tie">TIE ${CFG.baccarat.tie}:1</button>
     </div>
     <div class="betbar" id="baccBets"></div>
     <button class="gbtn red wide" id="baccGo" onclick="baccDeal()" style="font-family:'Cinzel',serif;letter-spacing:3px;font-size:16px">DEAL</button>
     <div class="result" id="baccRes"></div>
     <div class="note">Simplified baccarat demo: closest hand to 9 wins. Tens and face cards count as zero.</div>`,
   init: () => {
-    betBar('baccBets', v=>baccBet=v, ()=>baccBet);
+    betBar('baccBets', v=>baccBet=v, ()=>baccBet, CFG.baccBets);
     baccBusy = false;
     document.querySelectorAll('#baccOpts .betchip').forEach(b=>{
       b.classList.toggle('on', b.dataset.p===baccPick);
@@ -685,7 +699,7 @@ function baccSettle(p, b){
   const winner = p===b?'tie':(p>b?'player':'banker');
   const el = $('baccRes');
   if(winner === baccPick){
-    const mult = winner==='tie'?8 : winner==='banker'?0.95 : 1;
+    const mult = Number(CFG.baccarat[winner]);
     const win = Math.round(baccBet*(1+mult)); addCoins(win); beep(1200,.3);
     el.className='result win';
     el.textContent = `${winner.toUpperCase()} wins ${p} vs ${b} · +${fmt(win-baccBet)} 🪙`;
@@ -778,7 +792,7 @@ PANELS.sports = {
     <button class="gbtn red wide" onclick="sportPlay()" style="font-family:'Cinzel',serif;letter-spacing:3px">KICK OFF</button>
     <div class="result" id="sportRes"></div>
     <div class="note">Pick a winner in one or more matches, then Kick Off. Each pick stakes your bet at the shown multiplier. Pure luck, pure demo.</div>`,
-  init: () => { sportPicks = {}; betBar('sportBets', v=>sportBet=v, ()=>sportBet); }
+  init: () => { sportPicks = {}; betBar('sportBets', v=>sportBet=v, ()=>sportBet, CFG.sportBets); }
 };
 let sportBet = 100;
 function sportPick(btn){
@@ -809,7 +823,7 @@ function sportPlay(){
 }
 
 /* ---------- LUCKY WHEEL ---------- */
-const WHEEL_PRIZES = [5000, 500, 10000, 1000, 25000, 2000, 88888, 100];
+const WHEEL_PRIZES = CFG.wheelPrizes;
 let wheelSpinning = false, wheelAngle = 0;
 PANELS.wheel = {
   title: '🎡 LUCKY WHEEL',
@@ -881,7 +895,7 @@ PANELS.jackpot = {
 };
 
 /* ---------- DAILY ---------- */
-const DAILY_REWARDS = [5000, 8000, 12000, 20000, 30000, 50000, 100000];
+const DAILY_REWARDS = CFG.dailyRewards;
 PANELS.daily = {
   title: '🎁 DAILY REWARDS',
   html: () => {
